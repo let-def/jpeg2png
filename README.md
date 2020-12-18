@@ -176,7 +176,8 @@ This is the source for the DCT deviations model. Uniform distribution for the er
 
 ## Links
 
-[qjpegrest](http://viric.name/soft/qjpegrest/) is a tool that lets you try many different JPEG restoration methods (TV based, band-pass based and Huber MRF based). I learned from the code. See notes/qjpegrest.txt for installation help.
+* [qjpegrest](http://viric.name/soft/qjpegrest/) is a tool that lets you try many different JPEG restoration methods (TV based, band-pass based and Huber MRF based). I learned from the code. See notes/qjpegrest.txt for installation help.
+* [jpeg-quantsmooth](https://github.com/ilyakurdyukov/jpeg-quantsmooth) is program tries to recreate lost precision of DCT coefficients based on quantization table from jpeg image.
 
 ## License
 

@@ -18,11 +18,14 @@ SAVE_ASM=0
 WINDOWS=0
 
 # VARIABLES
+PNAME=jpeg2png
 CFLAGS+=-std=c11 -pedantic
 CFLAGS+=-msse2 -mfpmath=sse
 CFLAGS+=-g
 WARN_FLAGS+=-Wall -Wextra -Winline -Wshadow
 NO_WARN_FLAGS+=-w
+SRCS=src
+RM=rm -f
 ifeq ($(CC),)
 CC=$(HOST)gcc
 endif
@@ -30,7 +33,7 @@ ifeq ($(WINDRES),)
 WINDRES=$(HOST)windres
 endif
 LIBS+=-ljpeg -lpng -lm -lz
-OBJS+=jpeg2png.o utils.o jpeg.o png.o box.o compute.o logger.o progressbar.o fp_exceptions.o gopt/gopt.o ooura/dct.o
+OBJS+=$(SRCS)/jpeg2png.o $(SRCS)/utils.o $(SRCS)/jpeg.o $(SRCS)/png.o $(SRCS)/box.o $(SRCS)/compute.o $(SRCS)/logger.o $(SRCS)/progressbar.o $(SRCS)/fp_exceptions.o $(SRCS)/gopt/gopt.o $(SRCS)/ooura/dct.o
 HOST=
 EXE=
 
@@ -68,6 +71,8 @@ EXE=.exe
 LDFLAGS+=-static -s
 CFLAGS+=-mstackrealign # https://gcc.gnu.org/bugzilla/show_bug.cgi?id=48659
 RES+=icon.rc.o
+else
+CFLAGS+=-D_POSIX_C_SOURCE=200112
 endif
 
 ifeq ($(SAVE_ASM),1)
@@ -81,21 +86,22 @@ LDFLAGS+=$(BFLAGS)
 .PHONY: clean all install uninstall
 all: jpeg2png$(EXE)
 
-jpeg2png$(EXE): $(OBJS) $(RES) Makefile
+$(PNAME)$(EXE): $(OBJS) $(RES)
 	$(CC) $(OBJS) $(RES) -o $@ $(LDFLAGS) $(LIBS)
 
 -include $(OBJS:.o=.d)
 
-gopt/gopt.o: gopt/gopt.c gopt/gopt.h Makefile
+$(SRCS)/gopt/gopt.o: $(SRCS)/gopt/gopt.c $(SRCS)/gopt/gopt.h
 	$(CC) $< -c -o $@ $(CFLAGS) $(NO_WARN_FLAGS)
 
-%.o: %.c Makefile
+$(SRCS)/%.o: $(SRCS)/%.c
 	$(CC) -MP -MMD $< -c -o $@ $(CFLAGS) $(WARN_FLAGS)
 
 %.rc.o: %.rc Makefile
 	$(WINDRES) $< $@
 
 clean:
+	$(RM) $(OBJS) $(PNAME)$(EXE)
 	git clean -Xf
 
 install: all

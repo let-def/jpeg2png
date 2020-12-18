@@ -90,7 +90,10 @@ static inline void *alloc_simd(size_t n) {
 #if defined(_WIN32)
         void *p = _aligned_malloc(n, 16);
 #else
-        void *p = aligned_alloc(16, n);
+        void *p = NULL;
+        if (posix_memalign(&p, 16, n) != 0) {
+            die("aligned allocation error");
+        }
 #endif
         if(!p) { die("allocation error"); }
         ASSUME_ALIGNED(p);

@@ -1,0 +1,62 @@
+.TH "Jpeg2Png User Manual" 1 "1 Jul 2015" "Jpeg2Png documentation"
+
+.SH NAME
+jpeg2png
+
+.SH DESCRIPTION
+Silky smooth JPEG decoding
+
+.SH SYNOPSIS
+jpeg2png picture.jpg ... [-o picture.png] ... [flags...]
+
+.SH OPTIONS
+.TP
+-o|--output picture.png
+picture.png is the file name of the output filethe output file will be overwritten if this flag is used must be specified either zero times or once for every input file default value: original file name with the extension .png
+.TP
+-f|--force
+overwrite output files even when not given explicit file names
+.TP
+-w|--second-order-weight weight[,weight_cb,weight_cr]
+weight is a floating point number for TGV weight alpha_1 higher values give smoother transitions with less staircasing a value of 1.0 means equivalent weight to the first order weight a value of 0.0 means plain Total Variation, and gives a speed boost weights for the chroma components always default to 0. default value: 0.3
+.TP
+-p|--probability-weight pweight[,pweight_cb,pweight_cr]
+pweight is a floating point number for DCT coefficient distance weight higher values make the result more similar to the source JPEG a value of 1.0 means about equivalent weight to the first order weight a value of 0.0 means to ignore this and gives a speed boost weights for the chroma components default to the luma weight, default value: 0.001
+.TP
+-i|--iterations iterations[,iterations_cb,iterations_cr]
+iterations is an integer for the number of optimization steps higher values give better results but take more time iterations for the chroma components default to the luma iterations, default value: 50
+.TP
+-q|--quiet
+don't show the progress bar
+.TP
+-s|--separate-components
+separately optimize components this is faster and makes multithreading more effective however the edges of different components can be different
+.TP
+-t|--threads threads
+threads is a positive integer for the maximum number of threads used equivalent to setting the environment variable OMP_NUM_THREADS, default: number of CPUs
+.TP
+-1|--16-bits-png
+output PNG with 16 bits color depth instead of the usual 8 bits you should use a high number of iterations when using this option
+.TP
+-c|--csv_log csv_log
+csv_log is a file name for the optimization log, default: none
+.TP
+-h|--help
+display this help text and exit
+.TP
+-V|--version
+display version information and exit
+
+.SH EXAMPLE
+jpeg2png -o sample.png sample.jpg
+
+.SH COPYRIGHT
+Copyright 2015 victorvde.
+ All rights reserved.
+
+.SH SEE ALSO
+ imagemagick(1)
+
+.SH CONTACTS
+ Website: https://github.com/victorvde/jpeg2png
+ Autors: victorvde <victorvde@github.com>

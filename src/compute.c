@@ -12,7 +12,10 @@
 
 #include "ooura/dct.h"
 
-static_assert(FLT_EVAL_METHOD == 0, "to preserve identical output please disable excess precision");
+#if defined __USE_ISOC11
+  static_assert(FLT_EVAL_METHOD == 0, "to preserve identical output please disable excess precision");
+#endif
+
 #ifdef PRAGMA_FP_CONTRACT
 #pragma STDC FP_CONTRACT OFF
 #endif
