@@ -19,7 +19,10 @@ WINDOWS=0
 
 # VARIABLES
 CFLAGS+=-std=c11 -pedantic
+ARCH:=$(shell $(HOST)gcc -dumpmachine 2>/dev/null | cut -d- -f1)
+ifneq ($(filter i%86 x86_64,$(ARCH)),)
 CFLAGS+=-msse2 -mfpmath=sse
+endif
 CFLAGS+=-g
 WARN_FLAGS+=-Wall -Wextra -Winline -Wshadow
 NO_WARN_FLAGS+=-w
@@ -66,7 +69,7 @@ ifeq ($(WINDOWS),1)
 HOST=i686-w64-mingw32-
 EXE=.exe
 LDFLAGS+=-static -s
-CFLAGS+=-mstackrealign # https://gcc.gnu.org/bugzilla/show_bug.cgi?id=48659
+CFLAGS+=-msse2 -mfpmath=sse -mstackrealign # https://gcc.gnu.org/bugzilla/show_bug.cgi?id=48659
 RES+=icon.rc.o
 endif
 

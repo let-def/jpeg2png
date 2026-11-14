@@ -1,4 +1,4 @@
-#include <xmmintrin.h>
+#include "simd_compat.h"
 #include <math.h>
 #include "utils.h"
 
@@ -13,8 +13,8 @@ static double compute_step_prob_simd(unsigned w, unsigned h, float alpha, struct
                         unsigned i = block_y * block_w + block_x;
                         float *cosb = &cos[i*64];
                         for(unsigned j = 0; j < 64; j+=4) {
-                                __m128 coef_data = _mm_cvtpi16_ps(*(__m64 *)&(coef->data[i*64+j]));
-                                __m128 coef_quant_table = _mm_cvtpi16_ps(*(__m64 *)&(coef->quant_table[j]));
+                                __m128 coef_data = _mm_cvtpi16_ps_ptr(&(coef->data[i*64+j]));
+                                __m128 coef_quant_table = _mm_cvtpi16_ps_ptr(&(coef->quant_table[j]));
                                 _mm_empty();
 
                                 __m128 cosb_j = _mm_load_ps(&cosb[j]);
@@ -156,8 +156,8 @@ static void clamp_dct_simd(struct coef *coef, float *boxed, unsigned blocks) {
         __m128 mhalf = _mm_set_ps1(0.5);
         for(unsigned i = 0; i < blocks; i++) {
                 for(unsigned j = 0; j < 64; j+=4) {
-                        __m128 coef_data = _mm_cvtpi16_ps(*(__m64 *)&(coef->data[i*64+j]));
-                        __m128 coef_quant_table = _mm_cvtpi16_ps(*(__m64 *)&(coef->quant_table[j]));
+                        __m128 coef_data = _mm_cvtpi16_ps_ptr(&(coef->data[i*64+j]));
+                        __m128 coef_quant_table = _mm_cvtpi16_ps_ptr(&(coef->quant_table[j]));
 
                         __m128 min = (coef_data - mhalf) * coef_quant_table;
                         __m128 max = (coef_data + mhalf) * coef_quant_table;
