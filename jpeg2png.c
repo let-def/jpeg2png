@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <strings.h>
 #include <stdnoreturn.h>
 #ifdef _OPENMP
 #include <omp.h>
@@ -12,6 +13,7 @@
 #include "utils.h"
 #include "jpeg.h"
 #include "png.h"
+#include "tiff.h"
 #include "box.h"
 #include "compute.h"
 #include "logger.h"
@@ -34,6 +36,7 @@ noreturn static void usage() {
                 "\tthe output file will be overwritten if this flag is used\n"
                 "\tmust be specified either zero times or once for every input file\n"
                 "\tdefault value: original file name with the extension .png\n"
+                "\tCMYK jpegs are written as TIFF instead, with the extension .tif\n"
                 "\n");
         printf(
                 "-f\n"
@@ -94,7 +97,7 @@ noreturn static void usage() {
         printf(
                 "-1\n"
                 "--16-bits-png\n"
-                "\toutput PNG with 16 bits color depth instead of the usual 8 bits\n"
+                "\toutput PNG (or TIFF) with 16 bits color depth instead of the usual 8 bits\n"
                 "\tyou should use a high number of iterations when using this option\n"
                 "\n");
         printf(
@@ -116,6 +119,11 @@ noreturn static void usage() {
         exit(EXIT_FAILURE);
 }
 
+static bool has_tiff_extension(const char *name) {
+        size_t l = strlen(name);
+        return (l >= 4 && strcasecmp(&name[l-4], ".tif") == 0) || (l >= 5 && strcasecmp(&name[l-5], ".tiff") == 0);
+}
+
 // decode a single JPEG file smoothly
 void decode_file(const char* infile, const char *outfile, unsigned iterations[3], float weights[3], float pweights[3], unsigned png_bits, bool all_together, struct progressbar *pb, struct logger *plog) {
         // decode jpg normally
@@ -124,6 +132,9 @@ void decode_file(const char* infile, const char *outfile, unsigned iterations[3]
         struct jpeg jpeg;
         read_jpeg(in, &jpeg);
         fclose(in);
+        if(jpeg.c == 4 && !has_tiff_extension(outfile)) {
+                die("CMYK jpeg `%s` can only be written as TIFF, give an output file name ending in .tif", infile);
+        }
         for(unsigned c = 0; c < jpeg.c; c++) {
                 struct coef *coef = &jpeg.coefs[c];
                 decode_coefficients(coef);
@@ -148,20 +159,28 @@ void decode_file(const char* infile, const char *outfile, unsigned iterations[3]
                 for(unsigned i = 0; i < jpeg.c; i++) {
                         log.channel = i;
                         struct coef *coef = &jpeg.coefs[i];
-                        compute(1, coef, &log, pb, weights[i], &pweights[i], iterations[i]);
+                        // the 4th component and raw CMYK components use the luma settings
+                        unsigned s = (jpeg.c == 4 && !(jpeg.ycck && i < 3)) ? 0 : i;
+                        compute(1, coef, &log, pb, weights[s], &pweights[s], iterations[s]);
                 }
         }
 
-        // fixup luma range
-        struct coef *coef = &jpeg.coefs[0];
-        for(size_t i = 0; i < (size_t)coef->h * coef->w; i++) {
-                coef->fdata[i] += 128.;
+        // fixup range, chroma components are centered on zero
+        for(unsigned c = 0; c < jpeg.c; c++) {
+                bool chroma = (c == 1 || c == 2) && (jpeg.c == 3 || jpeg.ycck);
+                if(chroma) { continue; }
+                struct coef *coef = &jpeg.coefs[c];
+                for(size_t i = 0; i < (size_t)coef->h * coef->w; i++) {
+                        coef->fdata[i] += 128.;
+                }
         }
 
         // write png
         FILE *out = fopen(outfile, "wb");
         if(!out) { die_perror("could not open output file `%s`", outfile); }
-        if (jpeg.c == 3)
+        if (jpeg.c == 4)
+          write_tiff(out, png_bits, &jpeg);
+        else if (jpeg.c == 3)
           write_png(out, jpeg.w, jpeg.h, png_bits, &jpeg.coefs[0], &jpeg.coefs[1], &jpeg.coefs[2]);
         else
           write_png(out, jpeg.w, jpeg.h, png_bits, &jpeg.coefs[0], NULL, NULL);
@@ -289,6 +308,8 @@ int main(int argc, const char **argv) {
                         const char *infile = argv[1+i];
                         FILE *in = fopen(infile, "rb");
                         if(!in) { die("could not open input file `%s`", infile); }
+                        // CMYK jpegs are written as TIFF, as PNG has no CMYK
+                        const char *ext = peek_jpeg_components(in) == 4 ? ".tif" : ".png";
                         fclose(in);
 
                         unsigned l = strlen(infile);
@@ -301,7 +322,7 @@ int main(int argc, const char **argv) {
                         char *outfile = malloc(e + 4 + 1);
                         if(!outfile) { die("could not allocate outfile"); }
                         memcpy(outfile, infile, e);
-                        memcpy(outfile+e, ".png", 5);
+                        memcpy(outfile+e, ext, 5);
 
                         if(!nout && !force) {
                                 // don't overwrite when not given -o or -f, racy

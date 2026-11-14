@@ -6,10 +6,12 @@
 static const unsigned progressbar_width = 70;
 
 static unsigned get_to_print(unsigned current, unsigned max) {
+        if(max == 0) { return progressbar_width; }
         return progressbar_width * current / max;
 }
 
 static unsigned get_percentage(unsigned current, unsigned max) {
+        if(max == 0) { return 100; }
         return 100 * current / max;
 }
 
@@ -35,6 +37,7 @@ void progressbar_start(struct progressbar *pb, unsigned max) {
 }
 
 void progressbar_set(struct progressbar *pb, unsigned current) {
+        if(current > pb->max) { current = pb->max; }
         unsigned old_to_print = get_to_print(pb->current, pb->max);
         unsigned old_percentage = get_percentage(pb->current, pb->max);
         unsigned to_print = get_to_print(current, pb->max);

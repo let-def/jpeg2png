@@ -23,7 +23,7 @@ jpeg2png is smarter and fills the missing information to create the smoothest po
 ## Installation
 A compiled Windows version is available on the ["Releases" page](../../releases).
 
-jpeg2png is written in portable C, specifically C11. It relies on libjpeg and libpng.
+jpeg2png is written in portable C, specifically C11. It relies on libjpeg, libpng and libtiff.
 You can compile the executable using GNU make and either GCC or Clang. Execute one of
 
     make

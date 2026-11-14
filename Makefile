@@ -32,8 +32,8 @@ endif
 ifeq ($(WINDRES),)
 WINDRES=$(HOST)windres
 endif
-LIBS+=-ljpeg -lpng -lm -lz
-OBJS+=jpeg2png.o utils.o jpeg.o png.o box.o compute.o logger.o progressbar.o fp_exceptions.o gopt/gopt.o ooura/dct.o
+LIBS+=-ljpeg -lpng -ltiff -lm -lz
+OBJS+=jpeg2png.o utils.o jpeg.o png.o tiff.o box.o compute.o logger.o progressbar.o fp_exceptions.o gopt/gopt.o ooura/dct.o
 HOST=
 EXE=
 

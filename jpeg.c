@@ -18,6 +18,21 @@ static void die_output_message(struct jpeg_common_struct *c) {
         fprintf(stderr, "libjpeg error: %s\n", error_message);
 }
 
+// number of components of a JPEG file, rewinds the file
+unsigned peek_jpeg_components(FILE *in) {
+        struct jpeg_decompress_struct d;
+        struct jpeg_error_mgr jerr;
+        d.err = jpeg_std_error(&jerr);
+        d.err->output_message = die_output_message;
+        jpeg_create_decompress(&d);
+        jpeg_stdio_src(&d, in);
+        jpeg_read_header(&d, true);
+        unsigned c = d.num_components;
+        jpeg_destroy_decompress(&d);
+        rewind(in);
+        return c;
+}
+
 // read JPEG file DCT coefficients and quantization tables
 void read_jpeg(FILE *in, struct jpeg *jpeg) {
         struct jpeg_decompress_struct d;
@@ -32,8 +47,10 @@ void read_jpeg(FILE *in, struct jpeg *jpeg) {
         jpeg->w = d.image_width;
 
         jpeg->c = d.num_components;
-        if(d.num_components < 1 || d.num_components > 4)
-          { die("only jpegs with 1 to 4 components are supported (gray, rgb/yuv or cmyk)"); }
+        if(d.num_components != 1 && d.num_components != 3 && d.num_components != 4)
+          { die("only jpegs with 1, 3 or 4 components are supported (gray, rgb/yuv or cmyk)"); }
+        jpeg->ycck = d.jpeg_color_space == JCS_YCCK;
+        jpeg->inverted = d.saw_Adobe_marker;
 
         for(int c = 0; c < d.num_components; c++) {
                 unsigned i = d.comp_info[c].quant_tbl_no;
